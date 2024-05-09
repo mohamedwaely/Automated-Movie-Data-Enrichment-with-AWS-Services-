@@ -1,0 +1,119 @@
+{
+  "version": "36.0.0",
+  "artifacts": {
+    "DyraTaskStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "DyraTaskStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "DyraTaskStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/unknown-region",
+      "properties": {
+        "templateFile": "DyraTaskStack.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/04b432156c769bbb69cbe486d72146747b5f32045d80bcfef1705b6aa01e0388.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "DyraTaskStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-${AWS::Region}",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "DyraTaskStack.assets"
+      ],
+      "metadata": {
+        "/DyraTaskStack/top-movies-queue/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "topmoviesqueue3C2268CD"
+          }
+        ],
+        "/DyraTaskStack/GetData/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetDataServiceRoleA13E01EE"
+          }
+        ],
+        "/DyraTaskStack/GetData/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetData43D1E1D0"
+          }
+        ],
+        "/DyraTaskStack/MoviesBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MoviesBucket7147576D"
+          }
+        ],
+        "/DyraTaskStack/EnrichData/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EnrichDataServiceRoleCCF3A299"
+          }
+        ],
+        "/DyraTaskStack/EnrichData/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EnrichDataServiceRoleDefaultPolicy128E8A4D"
+          }
+        ],
+        "/DyraTaskStack/EnrichData/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EnrichDataCCD41067"
+          }
+        ],
+        "/DyraTaskStack/EnrichData/SqsEventSource:DyraTaskStacktopmoviesqueueC3B5DBB9/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EnrichDataSqsEventSourceDyraTaskStacktopmoviesqueueC3B5DBB91873E218"
+          }
+        ],
+        "/DyraTaskStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/DyraTaskStack/CDKMetadata/Condition": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadataAvailable"
+          }
+        ],
+        "/DyraTaskStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/DyraTaskStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "DyraTaskStack"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  }
+}
