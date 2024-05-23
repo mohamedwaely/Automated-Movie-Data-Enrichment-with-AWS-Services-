@@ -3,62 +3,77 @@ import os
 import boto3
 from urllib.parse import urlencode
 import urllib3
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 
 def handler(event, context):
-    # using the environment variables
-    # queue_url
-    queue_url = os.environ.get('QueueURL')
-    # bucket name
-    top_movies_bucket_name = os.environ.get('MoviesBucket')
-    # OMDB API key
-    api_key = os.environ.get('OMDB_API_KEY')
-
-    # S3 and SQS clients
-    sqs_client = boto3.client('sqs')
-    s3_client = boto3.client('s3','eu-north-1')
-    # print(event)
+    """
+    Processes messages from an SQS queue containing movie IDs in batches, fetches additional data from OMDB API for each movie,
+    merges the data, and stores all enriched movie data in an S3 bucket after processing the entire batch.
     
+    """
+
+    # Retrieve environment variables
+    queue_url = os.environ.get('QueueURL')
+    movies_bucket_name = os.environ.get('BucketName')
+    omdb_api_key = os.environ.get('OMDB_API_KEY')
+
+    # SQS and S3 clients
+    sqs_client = boto3.client('sqs')
+    s3_client = boto3.client('s3', 'eu-north-1')
+
+    enriched_movies = []
+
     try:
-        # message_body = event['Records'][0]['body']
-        # movies = json.loads(message_body)
+        for record in event['Records']:
+            try:
+                # Parse the SQS message body as JSON
+                movie_data = json.loads(record['body'])
+                movie_id = movie_data['id']
 
-        recs = event['Records']
+                # Build API URL with retrieved API key
+                api_url = f"https://www.omdbapi.com/?apikey={omdb_api_key}&i={movie_id}"
 
-        updated_movies_list=[]
+                # Make API request and handle errors
+                http = urllib3.PoolManager()
+                response = http.request('GET', api_url)
+                if response.status == 200:
+                    api_data = json.loads(response.data.decode('utf-8'))
 
-        for rec in recs:
-            imdb_id = rec["id"]
-            api_url = f"https://www.omdbapi.com/?apikey={api_key}&i={imdb_id}"
-            
-            # Use urllib3 to make the GET request
-            http = urllib3.PoolManager()
-            response = http.request('GET', api_url)
-        
-             # Check for successful response
-            if response.status == 200:
-                # Parse the JSON response
-                response_data = json.loads(response.data.decode('utf-8'))
-                # Update movie object with additional data
-                rec.update(response_data)
-                updated_movies_list.append(rec)
-            else:
-                # Handle failed request (e.g., log the error)
-                print(f"Error: API request failed with status code {response.status}")
-            # Delete received message from queue
-            receipt_handle = rec.get('ReceiptHandle')
-            if receipt_handle:
-                sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+                    movie_data = api_data
 
-        # Store enriched data in the Bucket
-        s3_client.put_object(Bucket=top_movies_bucket_name, Key="top_ten_enriched_movies.json", Body=json.dumps(updated_movies_list))
+                    # Add the enriched movie data to the list
+                    enriched_movies.append(movie_data)
+                    # print(len(enriched_movies))
 
-        # print the size of the message body
-        print(f"Received and processed")
+                else:
+                    logger.error(f"API request failed for movie ID: {movie_id} (status code: {response.status})")
 
-    except json.JSONDecodeError:
-        # Handle potential error if the message body isn't valid JSON
-        return {
-                'statusCode': 200,
-                'body': (print("Error: Invalid JSON format in message body."))
-        }
+            except json.JSONDecodeError as e:
+                logger.error(f"Error parsing message body (record {record['messageId']}): {e}")
+
+            except Exception as e:
+                logger.error(f"Unexpected error processing movie ID: {movie_id}", exc_info=True)
+
+    except KeyError as e:
+        logger.error(f"Missing required environment variable: {e}")
+        # Handle missing environment variables
+
+    # Store enriched data in S3 bucket after processing all messages in the batch
+    if enriched_movies:
+        s3_client.put_object(
+            Bucket=movies_bucket_name,
+            Key="top_ten_enriched_movies.json",
+            Body=json.dumps(enriched_movies)
+        )
+        logger.info(f"Processed {len(enriched_movies)} movies and stored enriched data in S3.")
+
+    # Delete processed messages from SQS queue
+    for record in event['Records']:
+        receipt_handle = record.get('ReceiptHandle')
+        if receipt_handle:
+            sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
